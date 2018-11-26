@@ -3,13 +3,31 @@
         <div class="container">
             <p>Game - {{ gameId }}</p>
 
-            <div class="chess-board" v-if="board">
-                <div class="chess-row" :class="index % 2 === 0 ? 'invert' : ''" v-for="(row, index) in board">
-                    <div class="chess-tile" v-for="piece in row">
-                        <div class="chess-piece" v-if="piece">
-                            <i class="fas"
-                               :class="'fa-chess-' + piece.piece + ' ' + (piece.white ? 'white' : 'black')">
-                            </i>
+            <div class="chess-board" v-if="board && !dropping">
+                <div :class="getChessRowClass(index)" v-for="(row, index) in board">
+                    <div v-for="tile in row">
+                        <div class="chess-tile">
+                            <drag class="chess-piece"
+                                  v-if="tile.piece"
+                                  :transfer-data="tile.location"
+                                  @dragstart="dropping = true"
+                                  @dragend="dropping = false">
+                                <i :class="getPieceClass(tile.piece)"></i>
+                            </drag>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chess-board" v-if="board && dropping">
+                <div :class="getChessRowClass(index)" v-for="(row, index) in board">
+                    <div v-for="tile in row">
+                        <div class="chess-tile">
+                            <drop class="chess-tile-drop"
+                                  :v-if="dropping"
+                                  @drop="handleDrop(tile.location, ...arguments)">
+                                <i :class="getPieceClass(tile.piece)" v-if="tile.piece"></i>
+                            </drop>
                         </div>
                     </div>
                 </div>
@@ -26,6 +44,7 @@
         data() {
             return {
                 gameId: this.$route.params.id,
+                dropping: false,
                 board: null,
             };
         },
@@ -39,6 +58,7 @@
             registerSocketListeners() {
                 socket.on('load-board', data => {
                     this.board = data.board;
+                    this.dropping = false;
                 });
 
                 socket.on('game-not-found', () => {
@@ -50,8 +70,26 @@
                 socket.emit('join-game', {gameId});
             },
 
-            movePiece(event) {
-                console.log(event);
+            getPieceClass(piece) {
+                return 'fas fa-chess-' + piece.name + ' ' + (piece.white ? 'white' : 'black');
+            },
+
+            getChessRowClass(index) {
+                return 'chess-row ' + (index % 2 === 0 ? 'invert' : '');
+            },
+
+            handleDrop(to, from) {
+                console.log('hello');
+
+                if (!location) {
+                    return;
+                }
+
+                if (!location) {
+                    return;
+                }
+
+                socket.emit('move-piece', {from, to, gameId: this.gameId});
             }
         },
     };
@@ -65,37 +103,41 @@
     }
 
     .chess-tile {
+        position: relative;
         display: block;
         height: 75px;
         width: 75px;
         background-color: #4e6088;
-    }
-
-    .chess-row > .chess-tile:nth-child(2n+1) {
-        background-color: #3b4d75;
-    }
-
-    .chess-row.invert > .chess-tile:nth-child(2n) {
-        background-color: #3b4d75;
-    }
-
-    .chess-row.invert > .chess-tile:nth-child(2n+1) {
-        background-color: #4e6088;
-    }
-
-    .chess-row {
+        font-size: 50px;
+        text-align: center;
         float: left;
     }
 
-    .chess-tile {
-        font-size: 50px;
-        text-align: center;
+    .chess-tile-drop {
+        position: absolute;
+        z-index: 99999;
+        display: block;
+        height: 75px;
+        width: 75px;
+        float: left;
     }
 
     .chess-piece {
         display: block;
         width: 75px;
         height: 75px;
+    }
+
+    .chess-row > div:nth-child(2n+1) > .chess-tile {
+        background-color: #3b4d75;
+    }
+
+    .chess-row.invert > div:nth-child(2n) > .chess-tile {
+        background-color: #3b4d75;
+    }
+
+    .chess-row.invert > div:nth-child(2n+1) > .chess-tile {
+        background-color: #4e6088;
     }
 
     .black {
