@@ -3,7 +3,7 @@
         <div class="container">
             <p>Game - {{ gameId }}</p>
 
-            <div class="chess-board" v-if="board && !dropping">
+            <div class="chess-board" v-if="board" :style="dropping ? 'display: none;' : ''">
                 <div :class="getChessRowClass(index)" v-for="(row, index) in board">
                     <div v-for="tile in row">
                         <div class="chess-tile">
@@ -19,7 +19,7 @@
                 </div>
             </div>
 
-            <div class="chess-board" v-if="board && dropping">
+            <div class="chess-board" v-if="board" :style="!dropping ? 'display: none;' : ''">
                 <div :class="getChessRowClass(index)" v-for="(row, index) in board">
                     <div v-for="tile in row">
                         <div class="chess-tile">
