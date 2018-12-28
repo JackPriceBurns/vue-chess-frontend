@@ -6,7 +6,7 @@
             <div class="chess-board" v-if="board" :style="dropping ? 'display: none;' : ''">
                 <div :class="getChessRowClass(index)" v-for="(row, index) in board">
                     <div v-for="tile in row">
-                        <div class="chess-tile">
+                        <div class="chess-tile" :class="recentlyMoved(tile) ? 'light-tile' : ''">
                             <drag class="chess-piece"
                                   v-if="tile.piece"
                                   :transfer-data="tile.location"
@@ -79,8 +79,6 @@
             },
 
             handleDrop(to, from) {
-                console.log('hello');
-
                 if (!location) {
                     return;
                 }
@@ -90,6 +88,19 @@
                 }
 
                 socket.emit('move-piece', {from, to, gameId: this.gameId});
+            },
+
+            /**
+             * @param {object} tile
+             * @param {object} tile.piece
+             * @returns {*}
+             */
+            recentlyMoved(tile) {
+                if (!tile.piece) {
+                    return false;
+                }
+
+                return tile.piece.recentlyMoved;
             }
         },
     };
@@ -126,6 +137,10 @@
         display: block;
         width: 75px;
         height: 75px;
+    }
+
+    .light-tile {
+        background-color: #4e599d !important;
     }
 
     .chess-row > div:nth-child(2n+1) > .chess-tile {
